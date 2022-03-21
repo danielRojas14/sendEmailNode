@@ -1,16 +1,19 @@
 const express = require("express");
 var path = require("path");
-const morgan = require("morgan");
 const prompts = require("prompts");
-const confirm = require("prompt-confirm");
 const nodemailer = require("nodemailer");
 const fs = require("fs");
-require("dotenv").config();
+
+
+
+//este script funciona interactuando por medio de la consola
+
+
 
 //Inicializar el Servidor
 const app = express();
 
-app.use(morgan("dev"));
+
 
 //Seteando el Puerto
 app.set("port", process.env.PORT || 4000);
@@ -24,54 +27,29 @@ const mensajes = [
   {
     type: "text",
     name: "nombreArchivo",
-    message: "Ingrese el nombre del Archivo",
+    message: "Ingrese el nombre del Archivo. Ejemplo: nuevoArchivo.txt",
   },
   {
     type: "text",
     name: "contenidoArchivo",
     message: "Ingrese el contenido del archivo(solo texto)",
   },
+  {
+    type: "text",
+    name: "enviarCorreo",
+    message: "Quiere que se envie en el correo el archivo creado? Y/N",
+  },
+  {
+    type: "text",
+    name: "crearArchivo",
+    message: "Quiere que se cree un nuevo archivo? Y/N",
+  },
 ];
 
-const existe = false;
 
-var pathh = path.join("enviarCorreoNode", "Refsnes", "..", "neuvoArchivo.txt");
-
-if (fs.existsSync("./nuevoArchivo.txt")) {
-  console.log("el archivo existe");
-  const existe = true;
-} else {
-  console.log("el archivo no existe");
-
-  const mensaje1 = new confirm("Desea que se cree un nuevo archivo?").ask(
-    async function (answer) {
-      if (answer) {
-        try {
-          (async () => {
-            const response = await prompts(mensajes);
-
-            fs.writeFileSync(response.nombreArchivo, response.contenidoArchivo);
-
-            const mensaje2 = new confirm(
-              "Desea que el archivo que creo se envie en el correo?"
-            ).ask(async function (answer) {
-              if (!answer) {
-                sendEmail();
-              } else {
-                console.log("hasta aqui llegamos");
-              }
-            });
-          })();
-        } catch (e) {
-          console.log("Cannot write file ", e);
-        }
-        return;
-      }
-    }
-  );
-}
-
-const sendEmail = (paramDATA) => {
+//funcion para la configuracion del Email
+const configSendEmail = (paramFileName) => {
+  console.log(paramFileName);
   async function main() {
     // Generate test SMTP service account from ethereal.email
     // Only needed if you don't have a real mail account for testing
@@ -94,13 +72,14 @@ const sendEmail = (paramDATA) => {
       to: "bar@example.com, baz@example.com", // list of receivers
       subject: "Hello ✔", // Subject line
       text: "Hello world?", // plain text body
-      attachment: [
+      attachments: [
         {
-          filename: "nuevoArchivo.txt",
-          path: pathh,
-          contentType: "text/plain",
+          filename: `${paramFileName}`,
+          path: path.join(__dirname, `./${paramFileName}`),
+          contentType: 'text/plain',
         },
       ],
+    
       html: "<b>Hello world?</b>", // html body
     });
 
@@ -114,3 +93,53 @@ const sendEmail = (paramDATA) => {
 
   main().catch(console.error);
 };
+
+
+
+//Verificacion de archivo existente y creacion del mismo
+
+if (fs.existsSync("./nuevoArchivo.txt")) {
+  console.log("el archivo existe");
+  try {
+    (async () => {
+  const enviarArchivo = await prompts(mensajes[2])
+  if (mensajes[2]== 'Y'|| mensajes[2]== 'y') {
+    configSendEmail('nuevoArchivo.txt');
+    
+  }
+})();
+} catch (e) {
+  console.log("Cannot write file ", e);
+}
+
+} else {
+  console.log("el archivo no existe");
+        try {
+          (async () => {
+            const crearTxt = await prompts(mensajes[3]);
+            console.log(crearTxt);
+
+            if (crearTxt.crearArchivo == 'Y' ||crearTxt.crearArchivo == 'y' ) {
+
+              const fileName = await prompts(mensajes[0])
+             
+              const fileConstent = await prompts(mensajes[1])
+              fs.writeFileSync(fileName.nombreArchivo, fileConstent.contenidoArchivo)
+
+              const enviarArchivo = await prompts(mensajes[2])
+              if (mensajes[2]== 'Y'|| mensajes[2]== 'y') {
+                configSendEmail(fileName.nombreArchivo);
+                
+              }
+            }
+
+
+            
+            
+          })();
+        } catch (e) {
+          console.log("Cannot write file ", e);
+        }
+        
+      }
+
