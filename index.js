@@ -9,11 +9,8 @@ const fs = require("fs");
 //este script funciona interactuando por medio de la consola
 
 
-
 //Inicializar el Servidor
 const app = express();
-
-
 
 //Seteando el Puerto
 app.set("port", process.env.PORT || 4000);
@@ -48,11 +45,10 @@ const mensajes = [
 
 
 //funcion para la configuracion del Email
-const configSendEmail = (paramFileName) => {
-  console.log(paramFileName);
+const configSendEmail = (paramFileName, paramDesicion) => {
+  console.log(paramDesicion);
+ 
   async function main() {
-    // Generate test SMTP service account from ethereal.email
-    // Only needed if you don't have a real mail account for testing
     let testAccount = await nodemailer.createTestAccount();
 
     // create reusable transporter object using the default SMTP transport
@@ -71,11 +67,12 @@ const configSendEmail = (paramFileName) => {
       from: '"Fred Foo 👻" danielrojas131415@gmail.com', // sender address
       to: "bar@example.com, baz@example.com", // list of receivers
       subject: "Hello ✔", // Subject line
-      text: "Hello world?", // plain text body
+      text: "Hello world?",// plain text body
+    
       attachments: [
         {
-          filename: `${paramFileName}`,
-          path: path.join(__dirname, `./${paramFileName}`),
+          filename: `${paramDesicion == 'n'||paramDesicion == 'N' ? '': paramFileName}`,
+          path: `${paramDesicion == 'n'||paramDesicion == 'N' ? '': path.join(__dirname, `./${paramFileName}`)}`,
           contentType: 'text/plain',
         },
       ],
@@ -100,24 +97,21 @@ const configSendEmail = (paramFileName) => {
 
 if (fs.existsSync("./nuevoArchivo.txt")) {
   console.log("el archivo existe");
-  try {
     (async () => {
   const enviarArchivo = await prompts(mensajes[2])
-  if (mensajes[2]== 'Y'|| mensajes[2]== 'y') {
-    configSendEmail('nuevoArchivo.txt');
+ 
+  if (enviarArchivo.enviarCorreo== 'Y'|| enviarArchivo.enviarCorreo== 'y') {
+    configSendEmail('nuevoArchivo.txt', enviarArchivo.enviarCorreo);
     
+  }else if(enviarArchivo.enviarCorreo== 'n'|| enviarArchivo.enviarCorreo== 'N'){
+    configSendEmail('nuevoArchivo.txt', enviarArchivo.enviarCorreo);
   }
 })();
-} catch (e) {
-  console.log("Cannot write file ", e);
-}
-
 } else {
   console.log("el archivo no existe");
         try {
           (async () => {
             const crearTxt = await prompts(mensajes[3]);
-            console.log(crearTxt);
 
             if (crearTxt.crearArchivo == 'Y' ||crearTxt.crearArchivo == 'y' ) {
 
@@ -127,16 +121,14 @@ if (fs.existsSync("./nuevoArchivo.txt")) {
               fs.writeFileSync(fileName.nombreArchivo, fileConstent.contenidoArchivo)
 
               const enviarArchivo = await prompts(mensajes[2])
-              if (mensajes[2]== 'Y'|| mensajes[2]== 'y') {
+              if (enviarArchivo.enviarCorreo== 'Y'|| enviarArchivo.enviarCorreo== 'y') {
                 configSendEmail(fileName.nombreArchivo);
                 
               }
+            }else if(crearTxt.crearArchivo == 'N' ||crearTxt.crearArchivo == 'n'){
+              console.log('lo lamento ya no podemos seguir');
             }
-
-
-            
-            
-          })();
+         })();
         } catch (e) {
           console.log("Cannot write file ", e);
         }
